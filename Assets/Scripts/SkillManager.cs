@@ -44,7 +44,8 @@ public class SkillManager : MonoBehaviour
             if (cooldownTimers[i] > 0)
             {
                 cooldownTimers[i] -= Time.deltaTime;
-                if (cooldownOverlays != null && cooldownOverlays[i] != null)
+                // Only update UI if we have cooldown overlays
+                if (cooldownOverlays != null && i < cooldownOverlays.Length && cooldownOverlays[i] != null && skills[i] != null)
                 {
                     cooldownOverlays[i].fillAmount = cooldownTimers[i] / skills[i].cooldown;
                 }
@@ -55,7 +56,7 @@ public class SkillManager : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             Debug.Log("Left mouse clicked. Selected skill: " + selectedSkill);
-            if (cooldownTimers[selectedSkill] <= 0)
+            if (selectedSkill >= 0 && selectedSkill < skills.Length && cooldownTimers[selectedSkill] <= 0)
             {
                 if (skills[selectedSkill] != null)
                 {
@@ -68,7 +69,7 @@ public class SkillManager : MonoBehaviour
                     Debug.Log("Selected skill is null!");
                 }
             }
-            else
+            else if (selectedSkill >= 0 && selectedSkill < skills.Length)
             {
                 Debug.Log("Skill on cooldown: " + cooldownTimers[selectedSkill] + " seconds remaining");
             }
