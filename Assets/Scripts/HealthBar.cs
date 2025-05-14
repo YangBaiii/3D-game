@@ -3,41 +3,51 @@ using UnityEngine.UI;
 
 public class HealthBar : MonoBehaviour
 {
-    public Transform target; // The character to follow
-    public Vector3 offset = new Vector3(0, 2f, 0); // Offset above the character
+    public Transform target;
+    public Vector3 offset = new Vector3(0, 2f, 0);
     public Slider healthSlider;
-    public Image fillImage;
-    public Gradient healthGradient; // Color gradient based on health percentage
+    public Color highHealthColor = Color.green;
+    public Color lowHealthColor = Color.red;
 
     private Camera mainCamera;
+    private Health targetHealth;
+    private Image fillImage;
 
     void Start()
     {
         mainCamera = Camera.main;
         
-        // Set up the health bar appearance
         if (healthSlider != null)
         {
             healthSlider.minValue = 0f;
             healthSlider.maxValue = 1f;
             healthSlider.value = 1f;
+            
+            // Get the fill image
+            fillImage = healthSlider.fillRect.GetComponent<Image>();
+            if (fillImage != null)
+            {
+                fillImage.color = highHealthColor;
+            }
         }
 
-        // Create gradient if not set
-        if (healthGradient == null)
+        if (target != null)
         {
-            healthGradient = new Gradient();
-            healthGradient.SetKeys(
-                new GradientColorKey[] { 
-                    new GradientColorKey(Color.red, 0.0f),
-                    new GradientColorKey(Color.yellow, 0.5f),
-                    new GradientColorKey(Color.green, 1.0f)
-                },
-                new GradientAlphaKey[] {
-                    new GradientAlphaKey(1.0f, 0.0f),
-                    new GradientAlphaKey(1.0f, 1.0f)
-                }
-            );
+            targetHealth = target.GetComponent<Health>();
+            if (targetHealth != null)
+            {
+                targetHealth.onDamage.AddListener(OnHealthChanged);
+                targetHealth.onHeal.AddListener(OnHealthChanged);
+            }
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (targetHealth != null)
+        {
+            targetHealth.onDamage.RemoveListener(OnHealthChanged);
+            targetHealth.onHeal.RemoveListener(OnHealthChanged);
         }
     }
 
@@ -45,11 +55,16 @@ public class HealthBar : MonoBehaviour
     {
         if (target != null)
         {
-            // Update position to follow the character
             transform.position = target.position + offset;
-            
-            // Make the health bar face the camera
             transform.rotation = mainCamera.transform.rotation;
+        }
+    }
+
+    private void OnHealthChanged()
+    {
+        if (targetHealth != null)
+        {
+            UpdateHealth(targetHealth.GetHealthPercentage());
         }
     }
 
@@ -59,10 +74,9 @@ public class HealthBar : MonoBehaviour
         {
             healthSlider.value = healthPercentage;
             
-            // Update fill color based on health percentage
             if (fillImage != null)
             {
-                fillImage.color = healthGradient.Evaluate(healthPercentage);
+                fillImage.color = Color.Lerp(lowHealthColor, highHealthColor, healthPercentage);
             }
         }
     }
